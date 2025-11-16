@@ -18,13 +18,18 @@ jobs:
       with:
         ruby-version: 3.4.7
         # bundler-cache: true
-    # - name: Install dependencies
-    #   run: bundle install --jobs 4 --retry 3
+    - name: Install dependencies
+      if: matrix.example != 'hello'
+      run: bundle install
+      working-directory: examples/${{ matrix.example }}
     - name: Build
+      if: matrix.example == 'hello'
       run: rake package
       working-directory: examples/${{ matrix.example }}
-      env:
-        WITH_NATIVE_EXT: true
+    - name: Build
+      if: matrix.example == 'gems'
+      run: bundle exec rake package
+      working-directory: examples/${{ matrix.example }}
     - name: Show standalone packages
       run: ls examples/${{ matrix.example }}/pkg
     - name: Upload standalone packages
