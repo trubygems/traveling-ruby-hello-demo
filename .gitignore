@@ -1,4 +1,6 @@
 .DS_Store
-hello-1.0.0-*
+pkg/
 *.tar.gz
 test-app/
+vendor/
+*.sqlite3

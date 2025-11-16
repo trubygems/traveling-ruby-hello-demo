@@ -1,7 +1,7 @@
 # For Bundler.with_clean_env
 require 'bundler/setup'
 
-PACKAGE_NAME = "hello"
+PACKAGE_NAME = "pact_broker"
 VERSION = "1.0.0"
 TRAVELING_RUBY_VERSION = "20251107-3.4.7"
 TRAVELING_RUBY_PKG_DATE = TRAVELING_RUBY_VERSION.split("-").first
@@ -12,7 +12,21 @@ RUBY_MINOR_VERSION = TRAVELING_RB_VERSION.split(".")[1].to_i
 
 # Native gem versions
 NATIVE_GEM_VERSIONS = {
+  bigdecimal: '3.3.1',
+  date: '3.5.0',
+  eventmachine: '1.2.7',
+  json: '2.16.0',
+  mysql2: '0.5.7',
+  nio4r: '2.7.5',
+  nokogiri: '1.18.10',
+  pg: '1.6.2',
+  psych: '5.2.6',
+  puma: '7.1.0',
+  racc: '1.8.1',
+  redcarpet: '3.6.1',
+  stringio: '3.1.7',
   sqlite3: '2.8.0',
+  thin: '2.0.1',
 }
 NATIVE_GEMS = NATIVE_GEM_VERSIONS.map { |k, v| "#{k}-#{v}" }
 
@@ -93,6 +107,8 @@ def create_package(version, target, os_type)
   sh "mkdir -p #{package_dir}"
   sh "mkdir -p #{package_dir}/lib/app"
   sh "cp #{PACKAGE_NAME}.rb #{package_dir}/lib/app/"
+  sh "cp packaging/config.ru #{package_dir}/lib/app/"
+  sh "cp packaging/*.json #{package_dir}/lib/app/"
   sh "mkdir -p #{package_dir}/lib/ruby"
   sh "tar -xzf build/traveling-ruby-#{TRAVELING_RUBY_VERSION}-#{target}.tar.gz -C #{package_dir}/lib/ruby"
   if os_type == :windows

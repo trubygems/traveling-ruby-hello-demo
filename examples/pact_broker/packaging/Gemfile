@@ -1,0 +1,22 @@
+source 'https://rubygems.org'
+
+gem "pact_broker-client", "1.77.0"
+gem 'pact_broker', "2.117.1"
+gem "padrino-core", "0.16.0.pre3"
+# pinned to versions available from traveling-ruby
+gem "sqlite3", "2.8.0"
+gem "pg", "1.6.2"
+gem "mysql2", "0.5.7"
+gem "json", "2.16.0"
+gem "bigdecimal", "3.3.1"
+gem "thin", "2.0.1"
+gem "puma", "7.1.0"
+gem "nokogiri", "1.18.10"
+gem "eventmachine", "1.2.7"
+gem "redcarpet", "3.6.1"
+gem "nio4r", "2.7.5"
+gem "psych", "5.2.6"
+gem "racc", "1.8.1"
+gem "date", "3.5.0"
+gem "stringio", "3.1.7"
+gem "webrick", "1.9.1"
