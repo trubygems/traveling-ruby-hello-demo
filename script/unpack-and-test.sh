@@ -58,7 +58,7 @@ fi
 
 echo BINARY_OS = $BINARY_OS
 echo BINARY_ARCH = $BINARY_ARCH
-cd pkg
+cd examples/$APP_NAME/pkg
 ls
 rm -rf test-app
 mkdir -p test-app

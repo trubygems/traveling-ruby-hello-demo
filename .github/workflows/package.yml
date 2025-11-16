@@ -10,6 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
+        example: ["hello"]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
@@ -21,15 +22,16 @@ jobs:
     #   run: bundle install --jobs 4 --retry 3
     - name: Build
       run: rake package
+      working-directory: examples/${{ matrix.example }}
       env:
         WITH_NATIVE_EXT: true
     - name: Show standalone packages
-      run: ls pkg
+      run: ls examples/${{ matrix.example }}/pkg
     - name: Upload standalone packages
       uses: actions/upload-artifact@v4
       with:
-        name: pkg
-        path: pkg
+        name: ${{ matrix.example }}-pkg
+        path: examples/${{ matrix.example }}/pkg
   test:
     defaults:
       run:
@@ -39,13 +41,19 @@ jobs:
       fail-fast: false
       matrix:
         os: ["windows-latest", "macos-latest", "ubuntu-latest"]
+        example: ["hello"]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
     - name: Download all workflow run artifacts
+      with:
+        name: ${{ matrix.example }}-pkg
+        path: examples/${{ matrix.example }}/pkg
       uses: actions/download-artifact@v4
     - name: test ${{ matrix.os }} package
       run: ./script/unpack-and-test.sh
+      env:
+        APP_NAME: ${{ matrix.example }}
   test-win-arm:
     defaults:
       run:
@@ -55,40 +63,60 @@ jobs:
       fail-fast: false
       matrix:
         os: ["windows-11-arm"]
+        example: ["hello"]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
     - name: Download all workflow run artifacts
+      with:
+        name: ${{ matrix.example }}-pkg
+        path: examples/${{ matrix.example }}/pkg
       uses: actions/download-artifact@v4
     - name: test ${{ matrix.os }} package
       run: ./script/unpack-and-test.sh
       env:
         BINARY_ARCH: arm64
         BINARY_OS: windows
+        APP_NAME: ${{ matrix.example }}
 
   test-linux-musl:
     needs: [package]
     runs-on: ubuntu-latest
     container:
       image: alpine:latest
+    strategy:
+      fail-fast: true
+      matrix:
+        example: ["hello"]
     steps:
     - uses: actions/checkout@v5
     - name: Install dependencies
       run: apk add --no-cache bash curl
     - name: Download all workflow run artifacts
+      with:
+        name: ${{ matrix.example }}-pkg
+        path: examples/${{ matrix.example }}/pkg
       uses: actions/download-artifact@v4
     - name: test musl package
       run: ./script/unpack-and-test.sh
       env:
         BINARY_ARCH: x86_64
         BINARY_OS: linux-musl
+        APP_NAME: ${{ matrix.example }}
 
   test-linux-musl-arm:
     needs: [package]
     runs-on: ubuntu-22.04-arm
+    strategy:
+      fail-fast: true
+      matrix:
+        example: ["hello"]
     steps:
     - uses: actions/checkout@v5
     - name: Download all workflow run artifacts
+      with:
+        name: ${{ matrix.example }}-pkg
+        path: examples/${{ matrix.example }}/pkg
       uses: actions/download-artifact@v4
     - name: Test in alpine container
       run: |
@@ -96,6 +124,7 @@ jobs:
           -v "${{ github.workspace }}:/workspace" \
           -e BINARY_ARCH=arm64 \
           -e BINARY_OS=linux-musl \
+          -e APP_NAME=${{ matrix.example }} \
           alpine:latest /bin/sh -c "
             apk add --no-cache bash curl && \
             cd /workspace && \
