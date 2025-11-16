@@ -35,7 +35,7 @@ def package_task_name(p)
 end
 
 def tarball_name(p)
-  "packaging/traveling-ruby-#{TRAVELING_RUBY_VERSION}-#{platform_name(p)}.tar.gz"
+  "build/traveling-ruby-#{TRAVELING_RUBY_VERSION}-#{platform_name(p)}.tar.gz"
 end
 
 # Generate all package tasks and file rules
@@ -68,33 +68,31 @@ task :bundle_install do
   sh "rm -rf build/tmp"
   sh "mkdir -p build/tmp"
   sh "cp packaging/Gemfile packaging/Gemfile.lock build/tmp/"
-  sh "mkdir -p build/tmp/lib/pact/mock_service"
   Bundler.with_unbundled_env do
     sh "cd build/tmp && env bundle config set --local path '../vendor' && env BUNDLE_DEPLOYMENT=true bundle install --verbose"
-    generate_readme
   end
   sh "rm -rf build/tmp"
   sh "rm -rf build/vendor/*/*/cache/*"
-  sh "rm -rf build/vendor/ruby/*/extensions" # remove host built extensions
+  # sh "rm -rf build/vendor/ruby/*/extensions" # remove host built extensions
 end
 
 
 
 def create_package(version, target, os_type)
-  package_dir = "#{PACKAGE_NAME}-#{VERSION}-#{target}"
+  package_dir = "pkg/#{PACKAGE_NAME}-#{VERSION}-#{target}"
   sh "rm -rf #{package_dir}"
-  sh "mkdir #{package_dir}"
+  sh "mkdir -p #{package_dir}"
   sh "mkdir -p #{package_dir}/lib/app"
   sh "cp hello.rb #{package_dir}/lib/app/"
-  sh "mkdir #{package_dir}/lib/ruby"
-  sh "tar -xzf packaging/traveling-ruby-#{TRAVELING_RUBY_VERSION}-#{target}.tar.gz -C #{package_dir}/lib/ruby"
+  sh "mkdir -p #{package_dir}/lib/ruby"
+  sh "tar -xzf build/traveling-ruby-#{TRAVELING_RUBY_VERSION}-#{target}.tar.gz -C #{package_dir}/lib/ruby"
   if os_type == :windows
     sh "cp packaging/wrapper.bat #{package_dir}/hello.bat"
   else
     sh "cp packaging/wrapper.sh #{package_dir}/hello"
   end
-  sh "cp -pR packaging/vendor #{package_dir}/lib/"
-  sh "cp Gemfile Gemfile.lock #{package_dir}/lib/vendor/"
+  sh "cp -pR build/vendor #{package_dir}/lib/"
+  sh "cp packaging/Gemfile packaging/Gemfile.lock #{package_dir}/lib/vendor/"
   sh "mkdir #{package_dir}/lib/vendor/.bundle"
   sh "cp packaging/bundler-config #{package_dir}/lib/vendor/.bundle/config"
   if !ENV['DIR_ONLY']
@@ -104,6 +102,6 @@ def create_package(version, target, os_type)
 end
 
 def download_runtime(version, target)
-  sh "cd packaging && curl -L -O --fail " +
+  sh "cd build && curl -L -O --fail " +
      "https://github.com/YOU54F/traveling-ruby/releases/download/rel-#{TRAVELING_RUBY_PKG_DATE}/traveling-ruby-#{version}-#{target}.tar.gz"
 end

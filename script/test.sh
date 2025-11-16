@@ -56,7 +56,7 @@ echo BINARY_ARCH = "$BINARY_ARCH"
 if [ "$BINARY_OS" != "windows" ]; then PATH_SEPERATOR=/; else PATH_SEPERATOR=\\; fi
 PATH_TO_BIN=.${PATH_SEPERATOR}examples${PATH_SEPERATOR}${APP_NAME:-pkg}${PATH_SEPERATOR}pkg${PATH_SEPERATOR}test-app${PATH_SEPERATOR}
 
-tools="lib${PATH_SEPERATOR}ruby${PATH_SEPERATOR}bin${PATH_SEPERATOR}ruby hello"
+tools="lib${PATH_SEPERATOR}ruby${PATH_SEPERATOR}bin${PATH_SEPERATOR}ruby ${EXECUTABLE_NAME:-hello}"
 
 for tool in $tools; do
   echo testing $tool
