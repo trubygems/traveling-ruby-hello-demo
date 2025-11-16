@@ -11,13 +11,21 @@ jobs:
       matrix:
         os: ["ubuntu-latest"]
         example: ["hello", "gem", "native", "pact_broker"]
+        ruby-version: ["3.4.7"]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
     - uses: ruby/setup-ruby@v1.267.0
       with:
-        ruby-version: 3.4.7
+        ruby-version: ${{ matrix.ruby-version }}
         # bundler-cache: true
+    - name: Cache gems
+      if: matrix.example != 'hello'
+      id: cache-gems
+      uses: actions/cache@v4
+      with:
+        path: examples/${{ matrix.example }}/build/vendor
+        key: vendor-${{ matrix.example }}-${{ hashFiles(format('examples/{0}/packaging/Gemfile.lock', matrix.example)) }}-ruby-${{ matrix.ruby-version }}
     - name: Install dependencies
       if: matrix.example != 'hello'
       run: bundle install
