@@ -35,13 +35,16 @@ jobs:
   test:
     defaults:
       run:
-        shell: bash
+        shell: ${{ matrix.shell }}
     needs: [package]
     strategy:
       fail-fast: false
       matrix:
         os: ["windows-latest", "macos-latest", "ubuntu-latest"]
         example: ["hello"]
+        shell:
+          - bash
+          - sh
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
@@ -57,13 +60,16 @@ jobs:
   test-win-arm:
     defaults:
       run:
-        shell: bash
+        shell: ${{ matrix.shell }}
     needs: [package]
     strategy:
       fail-fast: false
       matrix:
         os: ["windows-11-arm"]
         example: ["hello"]
+        shell:
+          - bash
+          - sh
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
@@ -91,7 +97,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     - name: Install dependencies
-      run: apk add --no-cache bash curl
+      run: apk add --no-cache curl
     - name: Download all workflow run artifacts
       with:
         name: ${{ matrix.example }}-pkg
@@ -126,7 +132,7 @@ jobs:
           -e BINARY_OS=linux-musl \
           -e APP_NAME=${{ matrix.example }} \
           alpine:latest /bin/sh -c "
-            apk add --no-cache bash curl && \
+            apk add --no-cache curl && \
             cd /workspace && \
             ./script/unpack-and-test.sh
           "
