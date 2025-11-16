@@ -1,7 +1,7 @@
 # For Bundler.with_clean_env
 require 'bundler/setup'
 
-PACKAGE_NAME = "hello"
+PACKAGE_NAME = "native"
 VERSION = "1.0.0"
 TRAVELING_RUBY_VERSION = "20251107-3.4.7"
 TRAVELING_RUBY_PKG_DATE = TRAVELING_RUBY_VERSION.split("-").first
