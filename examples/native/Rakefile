@@ -10,6 +10,12 @@ RUBY_COMPAT_VERSION = TRAVELING_RB_VERSION.split(".").first(2).join(".") + ".0"
 RUBY_MAJOR_VERSION = TRAVELING_RB_VERSION.split(".").first.to_i
 RUBY_MINOR_VERSION = TRAVELING_RB_VERSION.split(".")[1].to_i
 
+# Native gem versions
+NATIVE_GEM_VERSIONS = {
+  sqlite3: '2.8.0',
+}
+NATIVE_GEMS = NATIVE_GEM_VERSIONS.map { |k, v| "#{k}-#{v}" }
+
 # Platform/target definitions
 PLATFORMS = [
   { os: :linux,   arch: :x86_64, musl: false },
@@ -74,6 +80,9 @@ task :bundle_install do
   sh "rm -rf build/tmp"
   sh "rm -rf build/vendor/*/*/cache/*"
   sh "rm -rf build/vendor/ruby/*/extensions" # remove host built extensions
+  sh "find build/vendor/ruby/*/gems -name '*.so' | xargs rm -f"
+  sh "find build/vendor/ruby/*/gems -name '*.bundle' | xargs rm -f"
+  sh "find build/vendor/ruby/*/gems -name '*.o' | xargs rm -f"
 end
 
 
@@ -95,6 +104,7 @@ def create_package(version, target, os_type)
   sh "cp packaging/Gemfile packaging/Gemfile.lock #{package_dir}/lib/vendor/"
   sh "mkdir #{package_dir}/lib/vendor/.bundle"
   sh "cp packaging/bundler-config #{package_dir}/lib/vendor/.bundle/config"
+  download_and_unpack_ext(package_dir, target, NATIVE_GEMS)
   if !ENV['DIR_ONLY']
     sh "tar -czf #{package_dir}.tar.gz #{package_dir}"
     sh "rm -rf #{package_dir}"
@@ -104,4 +114,18 @@ end
 def download_runtime(version, target)
   sh "cd build && curl -L -O --fail " +
      "https://github.com/trubygems/traveling-ruby/releases/download/rel-#{TRAVELING_RUBY_PKG_DATE}/traveling-ruby-#{version}-#{target}.tar.gz"
+end
+
+
+def download_and_unpack_ext(package_dir, target, native_gems)
+  native_gems.each do |native_gem|
+    tarball = "build/traveling-ruby-#{TRAVELING_RUBY_VERSION}-#{target}-#{native_gem}.tar.gz"
+    url = "https://github.com/trubygems/traveling-ruby/releases/download/rel-#{TRAVELING_RUBY_PKG_DATE}/traveling-ruby-gems-#{TRAVELING_RUBY_VERSION}-#{target}-#{native_gem}.tar.gz"
+
+    sh "curl -L --fail #{url} -o #{tarball}"
+
+    sh "tar -xzf #{tarball} -C #{package_dir}/lib/vendor/ruby"
+
+    sh "rm #{tarball}"
+  end
 end

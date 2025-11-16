@@ -77,5 +77,5 @@ end
 
 def download_runtime(version, target)
   sh "cd packaging && curl -L -O --fail " +
-     "https://github.com/YOU54F/traveling-ruby/releases/download/rel-#{TRAVELING_RUBY_PKG_DATE}/traveling-ruby-#{version}-#{target}.tar.gz"
+     "https://github.com/trubygems/traveling-ruby/releases/download/rel-#{TRAVELING_RUBY_PKG_DATE}/traveling-ruby-#{version}-#{target}.tar.gz"
 end

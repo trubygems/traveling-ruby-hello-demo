@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        example: ["hello", "gems"]
+        example: ["hello", "gems", "native"]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
@@ -46,7 +46,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["windows-latest", "macos-latest", "ubuntu-latest"]
-        example: ["hello","gems"]
+        example: ["hello", "gems", "native"]
         shell:
           - bash
           - sh
@@ -82,7 +82,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["windows-11-arm"]
-        example: ["hello","gems"]
+        example: ["hello", "gems", "native"]
         shell:
           - bash
           - sh
@@ -119,7 +119,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        example: ["hello","gems"]
+        example: ["hello", "gems", "native"]
     steps:
     - uses: actions/checkout@v5
     - name: Install dependencies
