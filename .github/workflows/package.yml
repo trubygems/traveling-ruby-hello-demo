@@ -5,90 +5,429 @@ on:
 
 
 jobs:
-  package:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ["ubuntu-latest"]
-    runs-on: ${{ matrix.os }}
+
+  package-hello:
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
-    - uses: ruby/setup-ruby@v1.267.0
-      with:
-        ruby-version: 3.4.7
-        # bundler-cache: true
-    # - name: Install dependencies
-    #   run: bundle install --jobs 4 --retry 3
-    - name: Build
-      run: rake package
-      env:
-        WITH_NATIVE_EXT: true
-    - name: Show standalone packages
-      run: ls pkg
-    - name: Upload standalone packages
-      uses: actions/upload-artifact@v4
-      with:
-        name: pkg
-        path: pkg
-  test:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1.267.0
+        with:
+          ruby-version: 3.4.7
+      - name: Build
+        run: rake package
+        working-directory: examples/hello
+      - name: Show standalone packages
+        run: ls examples/hello/pkg
+      - name: Upload standalone packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-pkg
+          path: examples/hello/pkg
+
+  package-gem:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1.267.0
+        with:
+          ruby-version: 3.4.7
+      - name: Cache gems
+        id: cache-gems
+        uses: actions/cache@v4
+        with:
+          path: examples/gem/build/vendor
+          key: vendor-gem-${{ hashFiles('examples/gem/packaging/Gemfile.lock') }}-ruby-3.4.7
+      - name: Install dependencies
+        run: bundle install
+        working-directory: examples/gem
+      - name: Build
+        run: bundle exec rake package
+        working-directory: examples/gem
+      - name: Show standalone packages
+        run: ls examples/gem/pkg
+      - name: Upload standalone packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: gem-pkg
+          path: examples/gem/pkg
+
+  package-native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1.267.0
+        with:
+          ruby-version: 3.4.7
+      - name: Cache gems
+        id: cache-gems
+        uses: actions/cache@v4
+        with:
+          path: examples/native/build/vendor
+          key: vendor-native-${{ hashFiles('examples/native/packaging/Gemfile.lock') }}-ruby-3.4.7
+      - name: Install dependencies
+        run: bundle install
+        working-directory: examples/native
+      - name: Build
+        run: bundle exec rake package
+        working-directory: examples/native
+      - name: Show standalone packages
+        run: ls examples/native/pkg
+      - name: Upload standalone packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-pkg
+          path: examples/native/pkg
+
+  package-pact_broker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1.267.0
+        with:
+          ruby-version: 3.4.7
+      - name: Cache gems
+        id: cache-gems
+        uses: actions/cache@v4
+        with:
+          path: examples/pact_broker/build/vendor
+          key: vendor-pact_broker-${{ hashFiles('examples/pact_broker/packaging/Gemfile.lock') }}-ruby-3.4.7
+      - name: Install dependencies
+        run: bundle install
+        working-directory: examples/pact_broker
+      - name: Build
+        run: bundle exec rake package
+        working-directory: examples/pact_broker
+      - name: Show standalone packages
+        run: ls examples/pact_broker/pkg
+      - name: Upload standalone packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: pact_broker-pkg
+          path: examples/pact_broker/pkg
+
+
+
+  test-hello:
     defaults:
       run:
-        shell: bash
-    needs: [package]
+        shell: ${{ matrix.shell }}
+    needs: [package-hello]
     strategy:
       fail-fast: false
       matrix:
         os: ["windows-latest", "macos-latest", "ubuntu-latest"]
+        shell:
+          - bash
+          - sh
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
-    - name: Download all workflow run artifacts
-      uses: actions/download-artifact@v4
-    - name: test ${{ matrix.os }} package
-      run: ./script/unpack-and-test.sh
-  test-win-arm:
+      - uses: actions/checkout@v5
+      - name: Download hello workflow run artifacts
+        with:
+          name: hello-pkg
+          path: examples/hello/pkg
+        uses: actions/download-artifact@v4
+      - name: test ${{ matrix.os }} hello package
+        run: ./script/unpack-and-test.sh
+        env:
+          APP_NAME: hello
+      - name: Run hello via PowerShell (Windows only)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          powershell -Command "examples/hello/pkg/test-app/hello.bat"
+      - name: Run hello via CMD (Windows only)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          cmd /C examples\hello\pkg\test-app\hello.bat
+
+  test-gem:
     defaults:
       run:
-        shell: bash
-    needs: [package]
+        shell: ${{ matrix.shell }}
+    needs: [package-gem]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["windows-latest", "macos-latest", "ubuntu-latest"]
+        shell:
+          - bash
+          - sh
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download gem workflow run artifacts
+        with:
+          name: gem-pkg
+          path: examples/gem/pkg
+        uses: actions/download-artifact@v4
+      - name: test ${{ matrix.os }} gem package
+        run: ./script/unpack-and-test.sh
+        env:
+          APP_NAME: gem
+
+  test-native:
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    needs: [package-native]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["windows-latest", "macos-latest", "ubuntu-latest"]
+        shell:
+          - bash
+          - sh
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download native workflow run artifacts
+        with:
+          name: native-pkg
+          path: examples/native/pkg
+        uses: actions/download-artifact@v4
+      - name: test ${{ matrix.os }} native package
+        run: ./script/unpack-and-test.sh
+        env:
+          APP_NAME: native
+
+  test-pact_broker:
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    needs: [package-pact_broker]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["windows-latest", "macos-latest", "ubuntu-latest"]
+        shell:
+          - bash
+          - sh
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download pact_broker workflow run artifacts
+        with:
+          name: pact_broker-pkg
+          path: examples/pact_broker/pkg
+        uses: actions/download-artifact@v4
+      - name: test ${{ matrix.os }} pact_broker package
+        run: ./script/unpack-and-test.sh
+        env:
+          APP_NAME: pact_broker
+  
+
+  test-win-arm-hello:
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    needs: [package-hello]
     strategy:
       fail-fast: false
       matrix:
         os: ["windows-11-arm"]
+        shell:
+          - bash
+          - sh
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
-    - name: Download all workflow run artifacts
-      uses: actions/download-artifact@v4
-    - name: test ${{ matrix.os }} package
-      run: ./script/unpack-and-test.sh
-      env:
-        BINARY_ARCH: arm64
-        BINARY_OS: windows
+      - uses: actions/checkout@v5
+      - name: Download hello workflow run artifacts
+        with:
+          name: hello-pkg
+          path: examples/hello/pkg
+        uses: actions/download-artifact@v4
+      - name: test ${{ matrix.os }} hello package
+        run: ./script/unpack-and-test.sh
+        env:
+          BINARY_ARCH: arm64
+          BINARY_OS: windows
+          APP_NAME: hello
+      - name: Run hello via PowerShell (Windows only)
+        shell: powershell
+        run: |
+          powershell -Command "examples/hello/pkg/test-app/hello.bat"
+      - name: Run hello via CMD (Windows only)
+        shell: cmd
+        run: |
+          cmd /C examples\hello\pkg\test-app\hello.bat
 
-  test-linux-musl:
-    needs: [package]
+  test-win-arm-gem:
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    needs: [package-gem]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["windows-11-arm"]
+        shell:
+          - bash
+          - sh
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download gem workflow run artifacts
+        with:
+          name: gem-pkg
+          path: examples/gem/pkg
+        uses: actions/download-artifact@v4
+      - name: test ${{ matrix.os }} gem package
+        run: ./script/unpack-and-test.sh
+        env:
+          BINARY_ARCH: arm64
+          BINARY_OS: windows
+          APP_NAME: gem
+
+  test-win-arm-native:
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    needs: [package-native]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["windows-11-arm"]
+        shell:
+          - bash
+          - sh
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download native workflow run artifacts
+        with:
+          name: native-pkg
+          path: examples/native/pkg
+        uses: actions/download-artifact@v4
+      - name: test ${{ matrix.os }} native package
+        run: ./script/unpack-and-test.sh
+        env:
+          BINARY_ARCH: arm64
+          BINARY_OS: windows
+          APP_NAME: native
+
+  test-win-arm-pact_broker:
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    needs: [package-pact_broker]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["windows-11-arm"]
+        shell:
+          - bash
+          - sh
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download pact_broker workflow run artifacts
+        with:
+          name: pact_broker-pkg
+          path: examples/pact_broker/pkg
+        uses: actions/download-artifact@v4
+      - name: test ${{ matrix.os }} pact_broker package
+        run: ./script/unpack-and-test.sh
+        env:
+          BINARY_ARCH: arm64
+          BINARY_OS: windows
+          APP_NAME: pact_broker
+  
+
+  test-linux-musl-hello:
+    needs: [package-hello]
     runs-on: ubuntu-latest
     container:
       image: alpine:latest
     steps:
-    - uses: actions/checkout@v5
-    - name: Install dependencies
-      run: apk add --no-cache bash curl
-    - name: Download all workflow run artifacts
-      uses: actions/download-artifact@v4
-    - name: test musl package
-      run: ./script/unpack-and-test.sh
-      env:
-        BINARY_ARCH: x86_64
-        BINARY_OS: linux-musl
+      - uses: actions/checkout@v5
+      - name: Install dependencies
+        run: apk add --no-cache curl
+      - name: Download hello workflow run artifacts
+        with:
+          name: hello-pkg
+          path: examples/hello/pkg
+        uses: actions/download-artifact@v4
+      - name: test musl hello package
+        run: ./script/unpack-and-test.sh
+        env:
+          BINARY_ARCH: x86_64
+          BINARY_OS: linux-musl
+          APP_NAME: hello
 
-  test-linux-musl-arm:
-    needs: [package]
+  test-linux-musl-gem:
+    needs: [package-gem]
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install dependencies
+        run: apk add --no-cache curl
+      - name: Download gem workflow run artifacts
+        with:
+          name: gem-pkg
+          path: examples/gem/pkg
+        uses: actions/download-artifact@v4
+      - name: test musl gem package
+        run: ./script/unpack-and-test.sh
+        env:
+          BINARY_ARCH: x86_64
+          BINARY_OS: linux-musl
+          APP_NAME: gem
+
+  test-linux-musl-native:
+    needs: [package-native]
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install dependencies
+        run: apk add --no-cache curl
+      - name: Download native workflow run artifacts
+        with:
+          name: native-pkg
+          path: examples/native/pkg
+        uses: actions/download-artifact@v4
+      - name: test musl native package
+        run: ./script/unpack-and-test.sh
+        env:
+          BINARY_ARCH: x86_64
+          BINARY_OS: linux-musl
+          APP_NAME: native
+
+  test-linux-musl-pact_broker:
+    needs: [package-pact_broker]
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install dependencies
+        run: apk add --no-cache curl
+      - name: Download pact_broker workflow run artifacts
+        with:
+          name: pact_broker-pkg
+          path: examples/pact_broker/pkg
+        uses: actions/download-artifact@v4
+      - name: test musl pact_broker package
+        run: ./script/unpack-and-test.sh
+        env:
+          BINARY_ARCH: x86_64
+          BINARY_OS: linux-musl
+          APP_NAME: pact_broker
+
+  test-linux-musl-arm-hello:
+    needs: [package-hello]
     runs-on: ubuntu-22.04-arm
     steps:
     - uses: actions/checkout@v5
     - name: Download all workflow run artifacts
+      with:
+        name: hello-pkg
+        path: examples/hello/pkg
       uses: actions/download-artifact@v4
     - name: Test in alpine container
       run: |
@@ -96,8 +435,78 @@ jobs:
           -v "${{ github.workspace }}:/workspace" \
           -e BINARY_ARCH=arm64 \
           -e BINARY_OS=linux-musl \
+          -e APP_NAME=hello \
           alpine:latest /bin/sh -c "
-            apk add --no-cache bash curl && \
+            apk add --no-cache curl && \
+            cd /workspace && \
+            ./script/unpack-and-test.sh
+          "
+
+  test-linux-musl-arm-gem:
+    needs: [package-gem]
+    runs-on: ubuntu-22.04-arm
+    steps:
+    - uses: actions/checkout@v5
+    - name: Download all workflow run artifacts
+      with:
+        name: gem-pkg
+        path: examples/gem/pkg
+      uses: actions/download-artifact@v4
+    - name: Test in alpine container
+      run: |
+        docker run --rm \
+          -v "${{ github.workspace }}:/workspace" \
+          -e BINARY_ARCH=arm64 \
+          -e BINARY_OS=linux-musl \
+          -e APP_NAME=gem \
+          alpine:latest /bin/sh -c "
+            apk add --no-cache curl && \
+            cd /workspace && \
+            ./script/unpack-and-test.sh
+          "
+
+  test-linux-musl-arm-native:
+    needs: [package-native]
+    runs-on: ubuntu-22.04-arm
+    steps:
+    - uses: actions/checkout@v5
+    - name: Download all workflow run artifacts
+      with:
+        name: native-pkg
+        path: examples/native/pkg
+      uses: actions/download-artifact@v4
+    - name: Test in alpine container
+      run: |
+        docker run --rm \
+          -v "${{ github.workspace }}:/workspace" \
+          -e BINARY_ARCH=arm64 \
+          -e BINARY_OS=linux-musl \
+          -e APP_NAME=native \
+          alpine:latest /bin/sh -c "
+            apk add --no-cache curl && \
+            cd /workspace && \
+            ./script/unpack-and-test.sh
+          "
+
+  test-linux-musl-arm-pact_broker:
+    needs: [package-pact_broker]
+    runs-on: ubuntu-22.04-arm
+    steps:
+    - uses: actions/checkout@v5
+    - name: Download all workflow run artifacts
+      with:
+        name: pact_broker-pkg
+        path: examples/pact_broker/pkg
+      uses: actions/download-artifact@v4
+    - name: Test in alpine container
+      run: |
+        docker run --rm \
+          -v "${{ github.workspace }}:/workspace" \
+          -e BINARY_ARCH=arm64 \
+          -e BINARY_OS=linux-musl \
+          -e APP_NAME=pact_broker \
+          alpine:latest /bin/sh -c "
+            apk add --no-cache curl && \
             cd /workspace && \
             ./script/unpack-and-test.sh
           "

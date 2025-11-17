@@ -61,13 +61,13 @@ def create_package(version, target, os_type)
   package_dir = "pkg/#{PACKAGE_NAME}-#{VERSION}-#{target}"
   sh "rm -rf #{package_dir}"
   sh "mkdir -p #{package_dir}/lib/app"
-  sh "cp hello.rb #{package_dir}/lib/app/"
+  sh "cp #{PACKAGE_NAME}.rb #{package_dir}/lib/app/"
   sh "mkdir #{package_dir}/lib/ruby"
   sh "tar -xzf packaging/traveling-ruby-#{TRAVELING_RUBY_VERSION}-#{target}.tar.gz -C #{package_dir}/lib/ruby"
   if os_type == :windows
-    sh "cp packaging/wrapper.bat #{package_dir}/hello.bat"
+    sh "cp packaging/wrapper.bat #{package_dir}/#{PACKAGE_NAME}.bat"
   else
-    sh "cp packaging/wrapper.sh #{package_dir}/hello"
+    sh "cp packaging/wrapper.sh #{package_dir}/#{PACKAGE_NAME}"
   end
   if !ENV['DIR_ONLY']
     sh "tar -czf #{package_dir}.tar.gz #{package_dir}"
@@ -77,5 +77,5 @@ end
 
 def download_runtime(version, target)
   sh "cd packaging && curl -L -O --fail " +
-     "https://github.com/YOU54F/traveling-ruby/releases/download/rel-#{TRAVELING_RUBY_PKG_DATE}/traveling-ruby-#{version}-#{target}.tar.gz"
+     "https://github.com/trubygems/traveling-ruby/releases/download/rel-#{TRAVELING_RUBY_PKG_DATE}/traveling-ruby-#{version}-#{target}.tar.gz"
 end

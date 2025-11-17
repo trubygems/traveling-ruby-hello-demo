@@ -1,6 +1,6 @@
 .DS_Store
+.bundle
 pkg/
 *.tar.gz
-test-app/
 vendor/
 *.sqlite3
