@@ -47,7 +47,7 @@ PLATFORMS = [
   { os: :macos,   arch: :x86_64, musl: false },
   { os: :macos,   arch: :arm64,  musl: false },
   { os: :windows, arch: :x86_64, musl: false },
-  { os: :windows, arch: :arm64,  musl: false },
+  # { os: :windows, arch: :arm64,  musl: false },
 ]
 
 def platform_name(p)
