@@ -131,12 +131,13 @@ def create_package(version, target, os_type)
   sh "cp packaging/Gemfile packaging/Gemfile.lock #{package_dir}/lib/vendor/"
 
   # If packaging for Windows, patch Gemfile.lock for nokogiri platform as we are building platform specific gems with rake-compiler-dock
-  if os_type == :windows
+  if os_type == :windows && target.include?("arm64")
     lockfile = "#{package_dir}/lib/vendor/Gemfile.lock"
     if File.exist?(lockfile)
     content = File.read(lockfile)
     if content =~ /^    nokogiri \(#{NATIVE_GEM_VERSIONS[ :nokogiri ]}\)/
-      arch = target.include?("arm64") ? "-aarch64-mingw-ucrt" : "-x64-mingw-ucrt"
+      arch = "-aarch64-mingw-ucrt"
+      # arch = target.include?("arm64") ? "-aarch64-mingw-ucrt" : "-x64-mingw-ucrt"
       patched = content.gsub(/^    nokogiri \(#{NATIVE_GEM_VERSIONS[ :nokogiri ]}\)/, "    nokogiri (#{NATIVE_GEM_VERSIONS[ :nokogiri ]}#{arch})")
       File.write(lockfile, patched)
     end
@@ -179,13 +180,14 @@ end
 def download_and_unpack_ext(package_dir, target, native_gems)
   native_gems.each do |native_gem|
     is_windows = target.include?("windows")
+    is_arm64 = target.include?("arm64")
     is_nokogiri = native_gem.start_with?("nokogiri-")
     tarball = "build/traveling-ruby-#{TRAVELING_RUBY_VERSION}-#{target}-#{native_gem}.tar.gz"
     url = "https://github.com/trubygems/traveling-ruby/releases/download/rel-#{TRAVELING_RUBY_PKG_DATE}/traveling-ruby-gems-#{TRAVELING_RUBY_VERSION}-#{target}-#{native_gem}.tar.gz"
 
     sh "curl -L --fail #{url} -o #{tarball}"
 
-    if is_windows && is_nokogiri
+    if is_windows && is_nokogiri && is_arm64
       gem_dir = "#{package_dir}/lib/vendor/ruby/#{RUBY_COMPAT_VERSION}/gems"
       spec_dir = "#{package_dir}/lib/vendor/ruby/#{RUBY_COMPAT_VERSION}/specifications"
       sh "mkdir -p #{gem_dir} #{spec_dir}"
