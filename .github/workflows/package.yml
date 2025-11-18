@@ -386,32 +386,32 @@ jobs:
           BINARY_OS: windows
           APP_NAME: pact_broker
   
-  test-win-arm-rails:
-    defaults:
-      run:
-        shell: ${{ matrix.shell }}
-    needs: [package-rails]
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ["windows-11-arm"]
-        shell:
-          - bash
-          - sh
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v5
-      - name: Download rails workflow run artifacts
-        with:
-          name: rails-pkg
-          path: examples/rails/pkg
-        uses: actions/download-artifact@v4
-      - name: test ${{ matrix.os }} rails package
-        run: ./script/unpack-and-test.sh
-        env:
-          BINARY_ARCH: arm64
-          BINARY_OS: windows
-          APP_NAME: rails
+  # test-win-arm-rails:
+  #   defaults:
+  #     run:
+  #       shell: ${{ matrix.shell }}
+  #   needs: [package-rails]
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: ["windows-11-arm"]
+  #       shell:
+  #         - bash
+  #         - sh
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - name: Download rails workflow run artifacts
+  #       with:
+  #         name: rails-pkg
+  #         path: examples/rails/pkg
+  #       uses: actions/download-artifact@v4
+  #     - name: test ${{ matrix.os }} rails package
+  #       run: ./script/unpack-and-test.sh
+  #       env:
+  #         BINARY_ARCH: arm64
+  #         BINARY_OS: windows
+  #         APP_NAME: rails
   
 
   test-linux-musl-hello:

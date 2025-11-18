@@ -95,9 +95,9 @@ fi
 if [ -f "${PATH_TO_BIN}rails${FILE_EXT}" ]; then
 
     if [ "$BINARY_OS" = "windows" ]; then
-    ${PATH_TO_BIN}rails${FILE_EXT} server -P rails.pid &
+    ${PATH_TO_BIN}rails${FILE_EXT} server --pid rails.pid &
     else
-    ${PATH_TO_BIN}rails${FILE_EXT} server -D -P rails.pid
+    ${PATH_TO_BIN}rails${FILE_EXT} server --daemon --pid rails.pid
     fi
 
     for i in {1..30}; do
